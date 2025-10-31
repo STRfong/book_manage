@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>書籍列表 - 圖書管理系統</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen">
+    <div class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+
+        <!-- 頁面標題 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold text-gray-900 mb-2">📚 書籍列表</h1>
+                    <p class="text-gray-600">管理您的圖書館藏</p>
+                </div>
+                <a href="{% url 'library:publisher_list' %}"
+                   class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg shadow-lg transition transform hover:scale-105">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                    </svg>
+                    出版社管理
+                </a>
+            </div>
+        </div>
+
+        <!-- 工具列：新增按鈕 + 顯示模式切換 -->
+        <div class="mb-6 flex flex-wrap items-center justify-between gap-4">
+            <button onclick="openModal()"
+               class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                新增書籍
+            </button>
+
+            <!-- 顯示模式切換按鈕 -->
+            <div class="flex items-center bg-white rounded-lg shadow-md overflow-hidden">
+                <button id="cardViewBtn" onclick="switchToCardView()"
+                        class="view-toggle-btn active px-4 py-2 flex items-center gap-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                    </svg>
+                    <span class="text-sm font-medium">卡片</span>
+                </button>
+                <button id="listViewBtn" onclick="switchToListView()"
+                        class="view-toggle-btn px-4 py-2 flex items-center gap-2 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+                    </svg>
+                    <span class="text-sm font-medium">列表</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 卡片視圖 -->
+        <div id="cardView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for book in books %}
+                <div class="bg-white rounded-xl shadow-md hover:shadow-xl transition-all duration-300 overflow-hidden">
+                    <!-- 書籍資訊 -->
+                    <div class="p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                            {{ book.title }}
+                        </h2>
+
+                        <div class="space-y-2 mb-4">
+                            <!-- 價格 -->
+                            <div class="flex items-center text-gray-700">
+                                <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="font-semibold">NT$ {{ book.price }}</span>
+                            </div>
+
+                            <!-- 庫存 -->
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                                {% if book.stock > 0 %}
+                                    <span class="text-green-600 font-medium">庫存：{{ book.stock }} 本</span>
+                                {% else %}
+                                    <span class="text-red-600 font-medium">已售完</span>
+                                {% endif %}
+                            </div>
+
+                            <!-- 出版社 -->
+                            {% if book.publisher %}
+                            <div class="flex items-center text-gray-600">
+                                <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                                </svg>
+                                <span class="text-sm">{{ book.publisher.name }}</span>
+                            </div>
+                            {% endif %}
+                        </div>
+
+                        <!-- 價格標籤 -->
+                        {% if book.price > 500 %}
+                            <span class="inline-block px-3 py-1 bg-purple-100 text-purple-800 text-xs font-semibold rounded-full mb-4">
+                                高價書籍
+                            </span>
+                        {% elif book.price > 300 %}
+                            <span class="inline-block px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full mb-4">
+                                中價書籍
+                            </span>
+                        {% else %}
+                            <span class="inline-block px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full mb-4">
+                                平價書籍
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- 操作按鈕 -->
+                    <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex gap-2">
+                        <button onclick="openDetailModal({{ book.id }}, '{{ book.title }}', {{ book.price }}, {{ book.stock }}, '{{ book.publisher.name|default:'' }}')"
+                           class="flex-1 text-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg transition">
+                            查看
+                        </button>
+                        <button onclick="openEditModal({{ book.id }}, '{{ book.title }}', {{ book.price }}, {{ book.stock }}, {{ book.publisher.id }})"
+                           class="flex-1 text-center px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white text-sm font-medium rounded-lg transition">
+                            編輯
+                        </button>
+                        <button onclick="openDeleteModal({{ book.id }}, '{{ book.title }}')"
+                           class="flex-1 text-center px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition">
+                            刪除
+                        </button>
+                    </div>
+                </div>
+            {% empty %}
+                <div class="col-span-full">
+                    <div class="bg-white rounded-xl shadow-md p-12 text-center">
+                        <svg class="mx-auto h-16 w-16 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        <h3 class="text-xl font-semibold text-gray-900 mb-2">目前沒有書籍</h3>
+                        <p class="text-gray-600 mb-6">開始新增您的第一本書籍吧！</p>
+                        <a href="{% url 'library:book_create' %}"
+                           class="inline-flex items-center px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg transition">
+                            新增書籍
+                        </a>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- 列表視圖 -->
+        <div id="listView" class="hidden bg-white rounded-xl shadow-md overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gradient-to-r from-indigo-600 to-purple-600">
+                    <tr>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">書名</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">價格</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">庫存</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">出版社</th>
+                        <th class="px-6 py-4 text-left text-xs font-bold text-white uppercase tracking-wider">分類</th>
+                        <th class="px-6 py-4 text-center text-xs font-bold text-white uppercase tracking-wider">操作</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for book in books %}
+                    <tr class="hover:bg-gray-50 transition">
+                        <!-- 書名 -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <svg class="w-5 h-5 text-indigo-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                                </svg>
+                                <span class="text-sm font-semibold text-gray-900">{{ book.title }}</span>
+                            </div>
+                        </td>
+
+                        <!-- 價格 -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center text-sm text-gray-700">
+                                <svg class="w-4 h-4 text-green-600 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="font-medium">NT$ {{ book.price }}</span>
+                            </div>
+                        </td>
+
+                        <!-- 庫存 -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if book.stock > 0 %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+                                    </svg>
+                                    {{ book.stock }} 本
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-800">
+                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                                    </svg>
+                                    已售完
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 出版社 -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if book.publisher %}
+                                <span class="text-sm text-gray-700">{{ book.publisher.name }}</span>
+                            {% else %}
+                                <span class="text-sm text-gray-400">未設定</span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 價格分類 -->
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if book.price > 500 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                    💎 高價
+                                </span>
+                            {% elif book.price > 300 %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    📘 中價
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    📗 平價
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <!-- 操作按鈕 -->
+                        <td class="px-6 py-4 whitespace-nowrap text-center">
+                            <div class="flex items-center justify-center gap-2">
+                                <button onclick="openDetailModal({{ book.id }}, '{{ book.title }}', {{ book.price }}, {{ book.stock }}, '{{ book.publisher.name|default:'' }}')"
+                                   class="inline-flex items-center px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-medium rounded-md transition"
+                                   title="查看詳細">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="openEditModal({{ book.id }}, '{{ book.title }}', {{ book.price }}, {{ book.stock }}, {{ book.publisher.id }})"
+                                   class="inline-flex items-center px-3 py-1.5 bg-yellow-500 hover:bg-yellow-600 text-white text-xs font-medium rounded-md transition"
+                                   title="編輯">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                    </svg>
+                                </button>
+                                <button onclick="openDeleteModal({{ book.id }}, '{{ book.title }}')"
+                                   class="inline-flex items-center px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-medium rounded-md transition"
+                                   title="刪除">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-12 text-center">
+                            <svg class="mx-auto h-12 w-12 text-gray-400 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">目前沒有書籍</h3>
+                            <p class="text-gray-600">開始新增您的第一本書籍吧！</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- 新增書籍 Modal -->
+        <div id="createBookModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all">
+                <!-- Modal 標題 -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        新增書籍
+                    </h2>
+                    <button onclick="closeModal()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal 內容 -->
+                <form method="POST" action="{% url 'library:book_create' %}" class="p-6">
+                    {% csrf_token %}
+
+                    <!-- 書名 -->
+                    <div class="mb-4">
+                        <label for="title" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            書名 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="title" name="title" required
+                               placeholder="請輸入書名"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+
+                    <!-- 價格 -->
+                    <div class="mb-4">
+                        <label for="price" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            價格 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="price" name="price" required min="0"
+                               placeholder="請輸入價格"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+
+                    <!-- 庫存 -->
+                    <div class="mb-4">
+                        <label for="stock" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            庫存 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="stock" name="stock" required min="0"
+                               placeholder="請輸入庫存數量"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                    </div>
+
+                    <!-- 出版社 -->
+                    <div class="mb-6">
+                        <label for="publisher" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            出版社 <span class="text-red-500">*</span>
+                        </label>
+                        <select id="publisher" name="publisher" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 transition">
+                            <option value="">請選擇出版社</option>
+                            {% for publisher in publishers %}
+                                <option value="{{ publisher.id }}">{{ publisher.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 按鈕區 -->
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeModal()"
+                                class="flex-1 px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                            取消
+                        </button>
+                        <button type="submit"
+                                class="flex-1 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            確認新增
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 編輯書籍 Modal -->
+        <div id="editBookModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto transform transition-all">
+                <!-- Modal 標題 -->
+                <div class="bg-gradient-to-r from-yellow-500 to-orange-500 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                        </svg>
+                        編輯書籍
+                    </h2>
+                    <button onclick="closeEditModal()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal 內容 -->
+                <form id="editBookForm" method="POST" class="p-6">
+                    {% csrf_token %}
+
+                    <!-- 書名 -->
+                    <div class="mb-4">
+                        <label for="edit_title" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                            </svg>
+                            書名 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="edit_title" name="title" required
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition">
+                    </div>
+
+                    <!-- 價格 -->
+                    <div class="mb-4">
+                        <label for="edit_price" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            </svg>
+                            價格 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="edit_price" name="price" required min="0"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition">
+                    </div>
+
+                    <!-- 庫存 -->
+                    <div class="mb-4">
+                        <label for="edit_stock" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                            </svg>
+                            庫存 <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number" id="edit_stock" name="stock" required min="0"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition">
+                    </div>
+
+                    <!-- 出版社 -->
+                    <div class="mb-6">
+                        <label for="edit_publisher" class="block text-sm font-semibold text-gray-700 mb-2">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            出版社 <span class="text-red-500">*</span>
+                        </label>
+                        <select id="edit_publisher" name="publisher" required
+                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-yellow-500 focus:ring-2 focus:ring-yellow-200 transition">
+                            <option value="">請選擇出版社</option>
+                            {% for publisher in publishers %}
+                                <option value="{{ publisher.id }}">{{ publisher.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- 按鈕區 -->
+                    <div class="flex gap-3">
+                        <button type="button" onclick="closeEditModal()"
+                                class="flex-1 px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                            取消
+                        </button>
+                        <button type="submit"
+                                class="flex-1 px-6 py-3 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold rounded-lg shadow-lg transition transform hover:scale-105">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                            </svg>
+                            更新書籍
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- 查看書籍詳細資訊 Modal -->
+        <div id="detailBookModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto transform transition-all">
+                <!-- Modal 標題 -->
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+                        </svg>
+                        書籍詳細資訊
+                    </h2>
+                    <button onclick="closeDetailModal()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal 內容 -->
+                <div class="p-6">
+                    <!-- 書名 -->
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900 mb-2" id="detail_book_title"></h3>
+                        <div id="detail_book_category"></div>
+                    </div>
+
+                    <!-- 書籍資訊卡片 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                        <!-- 價格資訊 -->
+                        <div class="bg-green-50 rounded-xl p-4 border-2 border-green-200">
+                            <div class="flex items-center mb-2">
+                                <svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                                <span class="text-sm font-medium text-green-800">定價</span>
+                            </div>
+                            <p class="text-2xl font-bold text-green-700" id="detail_book_price"></p>
+                        </div>
+
+                        <!-- 庫存資訊 -->
+                        <div id="detail_stock_card" class="rounded-xl p-4 border-2">
+                            <div class="flex items-center mb-2">
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
+                                </svg>
+                                <span class="text-sm font-medium" id="detail_stock_label">庫存狀態</span>
+                            </div>
+                            <p class="text-2xl font-bold" id="detail_book_stock"></p>
+                            <p class="text-sm mt-1" id="detail_stock_status"></p>
+                        </div>
+                    </div>
+
+                    <!-- 出版社資訊 -->
+                    <div class="bg-purple-50 rounded-xl p-4 border-2 border-purple-200 mb-6">
+                        <div class="flex items-center">
+                            <svg class="w-5 h-5 text-purple-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+                            </svg>
+                            <div>
+                                <p class="text-sm font-medium text-purple-800">出版社</p>
+                                <p class="text-lg font-semibold text-purple-900" id="detail_book_publisher"></p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 關閉按鈕 -->
+                    <div class="flex justify-end">
+                        <button type="button" onclick="closeDetailModal()"
+                                class="px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                            關閉
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 刪除書籍 Modal -->
+        <div id="deleteBookModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+            <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full transform transition-all">
+                <!-- Modal 標題 -->
+                <div class="bg-gradient-to-r from-red-600 to-red-700 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        確認刪除
+                    </h2>
+                    <button onclick="closeDeleteModal()" class="text-white hover:text-gray-200 transition">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Modal 內容 -->
+                <div class="p-6">
+                    <p class="text-gray-700 text-lg mb-4">您確定要刪除以下書籍嗎？</p>
+                    <div class="bg-gray-50 rounded-lg p-4 mb-6">
+                        <p class="text-xl font-bold text-gray-900" id="delete_book_title"></p>
+                    </div>
+                    <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-6">
+                        <p class="text-red-800 font-semibold">⚠️ 警告：此操作無法復原！</p>
+                    </div>
+
+                    <!-- 按鈕區 -->
+                    <form id="deleteBookForm" method="POST" class="flex gap-3">
+                        {% csrf_token %}
+                        <button type="button" onclick="closeDeleteModal()"
+                                class="flex-1 px-6 py-3 bg-gray-300 hover:bg-gray-400 text-gray-800 font-semibold rounded-lg transition">
+                            取消
+                        </button>
+                        <button type="submit"
+                                class="flex-1 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg shadow-lg transition">
+                            <svg class="w-5 h-5 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                            確認刪除
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // Modal 相關函數
+        function openModal() {
+            document.getElementById('createBookModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            document.getElementById('createBookModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 點擊背景關閉 Modal
+        document.getElementById('createBookModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeModal();
+            }
+        });
+
+        // ESC 鍵關閉 Modal
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // 視圖切換相關函數
+        function switchToCardView() {
+            // 顯示卡片視圖，隱藏列表視圖
+            document.getElementById('cardView').classList.remove('hidden');
+            document.getElementById('listView').classList.add('hidden');
+
+            // 更新按鈕狀態
+            document.getElementById('cardViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+
+            // 儲存偏好設定
+            localStorage.setItem('viewMode', 'card');
+        }
+
+        function switchToListView() {
+            // 隱藏卡片視圖，顯示列表視圖
+            document.getElementById('cardView').classList.add('hidden');
+            document.getElementById('listView').classList.remove('hidden');
+
+            // 更新按鈕狀態
+            document.getElementById('cardViewBtn').classList.remove('active');
+            document.getElementById('listViewBtn').classList.add('active');
+
+            // 儲存偏好設定
+            localStorage.setItem('viewMode', 'list');
+        }
+
+        // 頁面載入時恢復上次的視圖模式
+        document.addEventListener('DOMContentLoaded', function() {
+            const savedViewMode = localStorage.getItem('viewMode') || 'card';
+            if (savedViewMode === 'list') {
+                switchToListView();
+            } else {
+                switchToCardView();
+            }
+        });
+
+        // 編輯書籍 Modal 相關函數
+        function openEditModal(bookId, title, price, stock, publisherId) {
+            // 設定表單 action
+            document.getElementById('editBookForm').action = `/library/book_edit/${bookId}/`;
+
+            // 填入現有資料
+            document.getElementById('edit_title').value = title;
+            document.getElementById('edit_price').value = price;
+            document.getElementById('edit_stock').value = stock;
+            document.getElementById('edit_publisher').value = publisherId;
+
+            // 顯示 Modal
+            document.getElementById('editBookModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeEditModal() {
+            document.getElementById('editBookModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 點擊背景關閉編輯 Modal
+        document.getElementById('editBookModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeEditModal();
+            }
+        });
+
+        // 刪除書籍 Modal 相關函數
+        function openDeleteModal(bookId, title) {
+            // 設定表單 action
+            document.getElementById('deleteBookForm').action = `/library/book_delete/${bookId}/`;
+
+            // 顯示書名
+            document.getElementById('delete_book_title').textContent = title;
+
+            // 顯示 Modal
+            document.getElementById('deleteBookModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteBookModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 點擊背景關閉刪除 Modal
+        document.getElementById('deleteBookModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDeleteModal();
+            }
+        });
+
+        // 查看書籍詳細 Modal 相關函數
+        function openDetailModal(bookId, title, price, stock, publisherName) {
+            // 設定書名
+            document.getElementById('detail_book_title').textContent = title;
+
+            // 設定價格
+            document.getElementById('detail_book_price').textContent = 'NT$ ' + price;
+
+            // 設定庫存
+            const stockCard = document.getElementById('detail_stock_card');
+            const stockLabel = document.getElementById('detail_stock_label');
+            const stockValue = document.getElementById('detail_book_stock');
+            const stockStatus = document.getElementById('detail_stock_status');
+
+            if (stock > 0) {
+                stockCard.className = 'bg-blue-50 border-blue-200 rounded-xl p-4 border-2';
+                stockLabel.className = 'text-sm font-medium text-blue-800';
+                stockValue.className = 'text-2xl font-bold text-blue-700';
+                stockValue.textContent = stock + ' 本';
+                stockStatus.className = 'text-sm text-blue-600 mt-1';
+                stockStatus.textContent = '✓ 有庫存';
+            } else {
+                stockCard.className = 'bg-red-50 border-red-200 rounded-xl p-4 border-2';
+                stockLabel.className = 'text-sm font-medium text-red-800';
+                stockValue.className = 'text-2xl font-bold text-red-700';
+                stockValue.textContent = '0 本';
+                stockStatus.className = 'text-sm text-red-600 mt-1';
+                stockStatus.textContent = '✗ 已售完';
+            }
+
+            // 設定分類標籤
+            const categoryDiv = document.getElementById('detail_book_category');
+            if (price > 500) {
+                categoryDiv.innerHTML = '<span class="inline-block px-4 py-1 bg-purple-100 text-purple-800 text-sm font-semibold rounded-full">💎 高價書籍</span>';
+            } else if (price > 300) {
+                categoryDiv.innerHTML = '<span class="inline-block px-4 py-1 bg-blue-100 text-blue-800 text-sm font-semibold rounded-full">📘 中價書籍</span>';
+            } else {
+                categoryDiv.innerHTML = '<span class="inline-block px-4 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">📗 平價書籍</span>';
+            }
+
+            // 設定出版社
+            document.getElementById('detail_book_publisher').textContent = publisherName || '未設定';
+
+            // 顯示 Modal
+            document.getElementById('detailBookModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailBookModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 點擊背景關閉詳細 Modal
+        document.getElementById('detailBookModal').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeDetailModal();
+            }
+        });
+    </script>
+
+    <!-- CSS 樣式 -->
+    <style>
+        /* 視圖切換按鈕樣式 */
+        .view-toggle-btn {
+            color: #6b7280;
+            background-color: white;
+        }
+
+        .view-toggle-btn:hover {
+            background-color: #f3f4f6;
+            color: #4f46e5;
+        }
+
+        .view-toggle-btn.active {
+            background-color: #4f46e5;
+            color: white;
+        }
+
+        .view-toggle-btn.active:hover {
+            background-color: #4338ca;
+        }
+    </style>
+</body>
+</html>
