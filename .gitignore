@@ -32,7 +32,6 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 /media
-/staticfiles
 
 # 虛擬環境
 venv/
@@ -57,4 +56,3 @@ ENV/
 .env.local
 
 # 靜態檔案
-staticfiles/

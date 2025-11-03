@@ -1,0 +1,37 @@
+/* 視圖切換按鈕樣式 */
+.view-toggle-btn {
+    color: #6b7280;
+    background-color: white;
+  }
+  
+  .view-toggle-btn:hover {
+    background-color: #f3f4f6;
+    color: #4f46e5;
+  }
+  
+  .view-toggle-btn.active {
+    background-color: #4f46e5;
+    color: white;
+  }
+  
+  .view-toggle-btn.active:hover {
+    background-color: #4338ca;
+  }
+  
+  /* Modal 背景動畫 */
+  #createBookModal,
+  #editBookModal,
+  #deleteBookModal,
+  #detailBookModal {
+    animation: fadeIn 0.2s ease-in-out;
+  }
+  
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+  
