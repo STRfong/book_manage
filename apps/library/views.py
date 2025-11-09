@@ -3,6 +3,12 @@ from django.views import View
 from django.http import HttpResponse, JsonResponse
 from .models.book import Book
 from .models.publisher import Publisher
+from django.shortcuts import render, redirect, get_object_or_404
+from django.views import View
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib import messages
+from .models.book import Book
+from .models.reading_list import ReadingList
 # Create your views here.
 class HelloWorldView(View):
     def get(self, request):
@@ -40,18 +46,22 @@ class BookListView(View):
     """書籍列表頁"""
 
     def get(self, request):
-        # 從資料庫取得所有書籍和出版社
-        books = Book.objects.select_related('publisher').all()
-        publishers = Publisher.objects.all()
+        books = Book.objects.all()
 
-        # 準備要傳給 Template 的資料
+        # 取得使用者已收藏的書籍 ID
+        user_favorite_book_ids = []
+        if request.user.is_authenticated:
+            user_favorite_book_ids = ReadingList.objects.filter(
+                user=request.user
+            ).values_list('book_id', flat=True)
+
         context = {
             'books': books,
-            'publishers': publishers,
+            'user_favorite_book_ids': list(user_favorite_book_ids),
+            'publishers': Publisher.objects.all(),
         }
-
-        # 渲染 Template 並返回
         return render(request, 'library/book_list.html', context)
+
 
 class BookDetailView(View):
     """書籍詳細頁"""
@@ -374,3 +384,60 @@ class PublisherDeleteView(View):
 
         # 重定向到列表頁
         return redirect('library:publisher_list')
+
+
+class AddToReadingListView(LoginRequiredMixin, View):
+    """加入閱讀清單"""
+
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+
+        # 檢查是否已經在清單中
+        already_exists = ReadingList.objects.filter(
+            user=request.user,
+            book=book
+        ).exists()
+
+        if already_exists:
+            messages.warning(request, f'《{book.title}》已經在你的最愛清單中了！')
+        else:
+            ReadingList.objects.create(user=request.user, book=book)
+            messages.success(request, f'已將《{book.title}》加入最愛！')
+
+        # 導回上一頁
+        return redirect(request.META.get('HTTP_REFERER', 'library:book_list'))
+
+
+class RemoveFromReadingListView(LoginRequiredMixin, View):
+    """從閱讀清單移除"""
+
+    def get(self, request, book_id):
+        book = get_object_or_404(Book, id=book_id)
+
+        reading_list_item = ReadingList.objects.filter(
+            user=request.user,
+            book=book
+        ).first()
+
+        if reading_list_item:
+            reading_list_item.delete()
+            messages.success(request, f'已將《{book.title}》從最愛移除！')
+        else:
+            messages.warning(request, f'《{book.title}》不在你的最愛清單中！')
+
+        return redirect(request.META.get('HTTP_REFERER', 'library:book_list'))
+
+
+class MyReadingListView(LoginRequiredMixin, View):
+    """我的閱讀清單頁面"""
+
+    def get(self, request):
+        reading_lists = ReadingList.objects.filter(
+            user=request.user
+        ).select_related('book', 'book__publisher')
+
+        context = {
+            'reading_lists': reading_lists,
+        }
+        return render(request, 'library/my_reading_list.html', context)
+

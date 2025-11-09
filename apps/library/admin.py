@@ -3,6 +3,7 @@ from .models import Book
 from .models import BookDetail
 from .models import Publisher
 from .models import Author
+from .models import ReadingList
 
 @admin.register(Book)
 class BookAdmin(admin.ModelAdmin):
@@ -29,3 +30,12 @@ class AuthorAdmin(admin.ModelAdmin):
     list_display = ('name', 'bio', 'birth_date', 'nationality')
     search_fields = ('name', 'bio', 'birth_date', 'nationality')
     ordering = ('-birth_date',)
+
+    from .models import ReadingList
+
+@admin.register(ReadingList)
+class ReadingListAdmin(admin.ModelAdmin):
+    list_display = ['user', 'book', 'added_date']
+    list_filter = ['added_date']
+    search_fields = ['user__username', 'book__title']
+    date_hierarchy = 'added_date'

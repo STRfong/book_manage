@@ -20,4 +20,9 @@ urlpatterns = [
     path('publisher_create/', views.PublisherCreateView.as_view(), name='publisher_create'),
     path('publisher_edit/<int:publisher_id>/', views.PublisherEditView.as_view(), name='publisher_edit'),
     path('publisher_delete/<int:publisher_id>/', views.PublisherDeleteView.as_view(), name='publisher_delete'),
+
+    # 閱讀清單相關
+    path('reading-list/', views.MyReadingListView.as_view(), name='my_reading_list'),
+    path('reading-list/add/<int:book_id>/', views.AddToReadingListView.as_view(), name='add_to_reading_list'),
+    path('reading-list/remove/<int:book_id>/', views.RemoveFromReadingListView.as_view(), name='remove_from_reading_list'),
 ]
