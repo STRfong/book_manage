@@ -1,0 +1,66 @@
+{% extends "core/base.html" %}
+{% block title %}我的最愛{% endblock %}
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h2 class="text-3xl font-bold text-gray-900 mb-6">我的最愛書籍</h2>
+
+  {% if reading_lists %}
+  <p class="text-gray-600 mb-6">共 {{ reading_lists|length }} 本書</p>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    {% for item in reading_lists %}
+    <div
+      class="bg-white rounded-lg shadow-md hover:shadow-lg transition duration-200 overflow-hidden flex flex-col"
+    >
+      <div class="p-6 flex-grow">
+        <h5 class="text-xl font-semibold text-gray-900 mb-3">
+          {{ item.book.title }}
+        </h5>
+        <p class="text-gray-700 mb-2">
+          <strong>作者：</strong>
+          {% for author in item.book.authors.all %} 
+            {{ author.name }}
+            {% if not forloop.last %}、{% endif %} 
+          {% endfor %}
+        </p>
+        <p class="text-gray-700 mb-2">
+          <strong>出版社：</strong>{{ item.book.publisher.name|default:"未知" }}
+        </p>
+        <p class="text-gray-500 text-sm mb-4">
+          加入日期：{{ item.added_date|date:"Y/m/d" }}
+        </p>
+
+        <div class="flex flex-col sm:flex-row gap-2">
+          <a
+            href="{% url 'library:book_detail' item.book.id %}"
+            class="flex-1 text-center bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+            >詳細資訊</a
+          >
+          <a
+            href="{% url 'library:remove_from_reading_list' item.book.id %}"
+            class="flex-1 text-center bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition duration-200"
+            >移除</a
+          >
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div
+    class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center max-w-2xl mx-auto"
+  >
+    <h4 class="text-xl font-semibold text-blue-900 mb-3">還沒有收藏任何書籍</h4>
+    <p class="text-blue-800">
+      快去
+      <a
+        href="{% url 'library:book_list' %}"
+        class="text-blue-600 hover:text-blue-800 underline font-medium"
+        >書籍列表</a
+      >
+      挑選你喜歡的書吧！
+    </p>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}
