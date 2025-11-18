@@ -441,3 +441,63 @@ class MyReadingListView(LoginRequiredMixin, View):
         }
         return render(request, 'library/my_reading_list.html', context)
 
+# ==================== AJAX API ====================
+
+class AddToReadingListAPIView(LoginRequiredMixin, View):
+    """加入閱讀清單 API（AJAX 版本）"""
+
+    def post(self, request, book_id):
+        """
+        使用 POST 方法（更符合 RESTful 原則）
+        """
+        book = get_object_or_404(Book, id=book_id)
+
+        # 檢查是否已經在清單中
+        already_exists = ReadingList.objects.filter(
+            user=request.user,
+            book=book
+        ).exists()
+
+        if already_exists:
+            return JsonResponse({
+                'success': False,
+                'message': f'《{book.title}》已經在你的最愛清單中了！'
+            }, status=400)  # 400 Bad Request
+
+        # 建立閱讀清單項目
+        ReadingList.objects.create(user=request.user, book=book)
+
+        return JsonResponse({
+            'success': True,
+            'message': f'已將《{book.title}》加入最愛！',
+            'book_id': book_id
+        })
+
+
+class RemoveFromReadingListAPIView(LoginRequiredMixin, View):
+    """從閱讀清單移除 API（AJAX 版本）"""
+
+    def post(self, request, book_id):
+        """
+        使用 POST 方法（也可以用 DELETE，但 POST 較簡單）
+        """
+        book = get_object_or_404(Book, id=book_id)
+
+        reading_list_item = ReadingList.objects.filter(
+            user=request.user,
+            book=book
+        ).first()
+
+        if not reading_list_item:
+            return JsonResponse({
+                'success': False,
+                'message': f'《{book.title}》不在你的最愛清單中！'
+            }, status=400)
+
+        reading_list_item.delete()
+
+        return JsonResponse({
+            'success': True,
+            'message': f'已將《{book.title}》從最愛移除！',
+            'book_id': book_id
+        })

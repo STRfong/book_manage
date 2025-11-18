@@ -327,7 +327,135 @@ const BookListApp = (function () {
       isInitialized() {
         return isInitialized;
       },
-    };
+
+          // ==========================================
+        // 閱讀清單 AJAX 功能（加入/移除最愛）
+        // ==========================================
+
+        /**
+         * 加入最愛函數
+         * @param {number} bookId - 書籍 ID
+         * @param {HTMLElement} buttonElement - 按鈕元素
+         */
+        addToReadingList(bookId, buttonElement) {
+          const self = this; // 保存 module 的 context
+
+          // 儲存原本的內容
+          const originalHTML = buttonElement.innerHTML;
+          const originalClass = buttonElement.className;
+
+          // 設定 Loading 狀態
+          buttonElement.disabled = true;
+          buttonElement.innerHTML = "⏳ 處理中...";
+          buttonElement.className =
+            buttonElement.className.replace(/bg-\S+|border-\S+|text-\S+/g, "") +
+            " bg-gray-300 text-gray-600 cursor-not-allowed";
+
+          sendRequest({
+            url: `/library/api/reading-list/add/${bookId}/`,
+            method: "POST",
+            onSuccess: (data) => {
+              // 顯示成功訊息
+              alert(data.message);
+
+              // 更新按鈕為「已收藏」狀態
+              if (originalClass.includes("flex-1")) {
+                // 卡片視圖的樣式
+                buttonElement.innerHTML = "❤️ 已收藏";
+                buttonElement.className =
+                  "btn-remove-favorite flex-1 text-center px-4 py-2 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-lg transition";
+              } else {
+                // 列表視圖的樣式（保留 SVG）
+                buttonElement.className =
+                  "btn-remove-favorite inline-flex items-center px-3 py-1.5 bg-pink-500 hover:bg-pink-600 text-white text-xs font-medium rounded-md transition";
+                buttonElement.title = "已收藏";
+                buttonElement.innerHTML =
+                  '<svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clip-rule="evenodd"/></svg>';
+              }
+              buttonElement.disabled = false;
+
+              // 重新綁定事件為「移除」（使用 self 來保留 module context）
+              buttonElement.onclick = function () {
+                self.removeFromReadingList(bookId, this);
+              };
+            },
+            onError: (error) => {
+              // 失敗時的處理
+              alert(error.message || "加入失敗，請稍後再試");
+
+              // 恢復按鈕原本狀態
+              buttonElement.innerHTML = originalHTML;
+              buttonElement.className = originalClass;
+              buttonElement.disabled = false;
+            },
+          });
+        },
+
+        /**
+         * 移除最愛函數
+         * @param {number} bookId - 書籍 ID
+         * @param {HTMLElement} buttonElement - 按鈕元素
+         */
+        removeFromReadingList(bookId, buttonElement) {
+          const self = this; // 保存 module 的 context
+
+          // 確認是否要移除
+          if (!confirm("確定要從最愛移除嗎？")) {
+            return;
+          }
+
+          // 儲存原本的內容
+          const originalHTML = buttonElement.innerHTML;
+          const originalClass = buttonElement.className;
+
+          // 設定 Loading 狀態
+          buttonElement.disabled = true;
+          buttonElement.innerHTML = "⏳ 處理中...";
+          buttonElement.className =
+            buttonElement.className.replace(/bg-\S+|border-\S+|text-\S+/g, "") +
+            " bg-gray-300 text-gray-600 cursor-not-allowed";
+
+          sendRequest({
+            url: `/library/api/reading-list/remove/${bookId}/`,
+            method: "POST",
+            onSuccess: (data) => {
+              // 顯示成功訊息
+              alert(data.message);
+
+              // 更新按鈕為「加入最愛」狀態
+              if (originalClass.includes("flex-1")) {
+                // 卡片視圖的樣式
+                buttonElement.innerHTML = "🤍 加入最愛";
+                buttonElement.className =
+                  "btn-add-favorite flex-1 text-center px-4 py-2 border-2 border-pink-500 text-pink-500 hover:bg-pink-50 text-sm font-medium rounded-lg transition";
+              } else {
+                // 列表視圖的樣式（保留 SVG）
+                buttonElement.className =
+                  "btn-add-favorite inline-flex items-center px-3 py-1.5 border-2 border-pink-500 text-pink-500 hover:bg-pink-50 text-xs font-medium rounded-md transition";
+                buttonElement.title = "加入最愛";
+                buttonElement.innerHTML =
+                  '<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/></svg>';
+              }
+              buttonElement.disabled = false;
+
+              // 重新綁定事件為「加入」（使用 self 來保留 module context）
+              buttonElement.onclick = function () {
+                self.addToReadingList(bookId, this);
+              };
+            },
+            onError: (error) => {
+              // 失敗時的處理
+              alert(error.message || "移除失敗，請稍後再試");
+
+              // 恢復按鈕原本狀態
+              buttonElement.innerHTML = originalHTML;
+              buttonElement.className = originalClass;
+              buttonElement.disabled = false;
+            },
+          });
+        },
+
+      };
   })();
   
   // ==========================================
