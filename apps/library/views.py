@@ -43,24 +43,51 @@ class JsonResponseView(View):
 
 
 class BookListView(View):
-    """書籍列表頁"""
+    """書籍列表頁 - 只渲染頁面骨架，資料透過 AJAX 載入"""
 
     def get(self, request):
-        books = Book.objects.all()
+        # 只傳遞出版社資料給表單使用（Modal 新增/編輯需要）
+        context = {
+            'publishers': Publisher.objects.all(),
+        }
+        return render(request, 'library/book_list.html', context)
+
+
+class BookListAPIView(View):
+    """書籍列表 API - 回傳 JSON 資料"""
+
+    def get(self, request):
+        books = Book.objects.select_related('publisher').all()
 
         # 取得使用者已收藏的書籍 ID
         user_favorite_book_ids = []
         if request.user.is_authenticated:
-            user_favorite_book_ids = ReadingList.objects.filter(
-                user=request.user
-            ).values_list('book_id', flat=True)
+            user_favorite_book_ids = list(
+                ReadingList.objects.filter(user=request.user).values_list('book_id', flat=True)
+            )
 
-        context = {
-            'books': books,
-            'user_favorite_book_ids': list(user_favorite_book_ids),
-            'publishers': Publisher.objects.all(),
-        }
-        return render(request, 'library/book_list.html', context)
+        # 組裝書籍資料
+        books_data = []
+        for book in books:
+            books_data.append({
+                'id': book.id,
+                'title': book.title,
+                'price': book.price,
+                'stock': book.stock,
+                'publisher': {
+                    'id': book.publisher.id if book.publisher else None,
+                    'name': book.publisher.name if book.publisher else None,
+                } if book.publisher else None,
+            })
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'books': books_data,
+                'user_favorite_book_ids': user_favorite_book_ids,
+                'is_authenticated': request.user.is_authenticated,
+            }
+        })
 
 
 class BookDetailView(View):
