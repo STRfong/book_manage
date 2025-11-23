@@ -43,6 +43,20 @@ const BookListApp = (function () {
   };
 
   // ==========================================
+  // WebSocket 設定
+  // ==========================================
+  // 根據目前頁面協定自動選擇 ws 或 wss
+  // http:// → ws://（本地開發）
+  // https:// → wss://（正式環境）
+  const WS_PROTOCOL = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+
+  const WS_CONFIG = {
+    URL: `${WS_PROTOCOL}//${window.location.host}/ws/books/`,
+    // 斷線後重新連線的間隔（毫秒）
+    RECONNECT_INTERVAL: 3000,
+  };
+
+  // ==========================================
   // 私有變數
   // ==========================================
 
@@ -51,6 +65,9 @@ const BookListApp = (function () {
   let booksData = [];
   let userFavoriteBookIds = [];
   let isAuthenticated = false;
+  // WebSocket 相關變數
+  let websocket = null;
+  let wsReconnectTimer = null;
 
   // ==========================================
   // 私有方法 - 狀態管理
@@ -542,6 +559,131 @@ const BookListApp = (function () {
   }
 
   // ==========================================
+  // 私有方法 - WebSocket
+  // ==========================================
+
+  /**
+   * 初始化 WebSocket 連線
+   */
+  function initWebSocket() {
+    // 如果已有連線，先關閉
+    if (websocket) {
+      websocket.close();
+    }
+
+    console.log("[WebSocket] 正在連線...", WS_CONFIG.URL);
+    websocket = new WebSocket(WS_CONFIG.URL);
+
+    // 連線成功
+    websocket.onopen = function (e) {
+      console.log("[WebSocket] 連線成功！");
+
+      // 清除重連計時器
+      if (wsReconnectTimer) {
+        clearTimeout(wsReconnectTimer);
+        wsReconnectTimer = null;
+      }
+    };
+
+    // 收到訊息
+    websocket.onmessage = function (e) {
+      const data = JSON.parse(e.data);
+      console.log("[WebSocket] 收到訊息:", data);
+
+      // 處理書籍更新通知
+      if (data.type === "book_update") {
+        handleBookUpdate(data);
+      }
+    };
+
+    // 連線關閉
+    websocket.onclose = function (e) {
+      console.log("[WebSocket] 連線已關閉，將在 3 秒後重新連線...");
+
+      // 設定自動重連
+      wsReconnectTimer = setTimeout(function () {
+        console.log("[WebSocket] 嘗試重新連線...");
+        initWebSocket();
+      }, WS_CONFIG.RECONNECT_INTERVAL);
+    };
+
+    // 連線錯誤
+    websocket.onerror = function (e) {
+      console.error("[WebSocket] 發生錯誤:", e);
+    };
+  }
+
+  /**
+   * 處理書籍更新通知
+   * @param {Object} data - 包含 action 和 message
+   */
+  function handleBookUpdate(data) {
+    // 1. 顯示通知
+    showUpdateNotification(data.message, data.action);
+
+    // 2. 延遲後重新載入資料（讓使用者先看到通知）
+    setTimeout(() => {
+      showState("loadingState");
+
+      sendRequest({
+        url: API_ENDPOINTS.BOOK_LIST,
+        method: "GET",
+        onSuccess: (response) => {
+          if (response.success) {
+            booksData = response.data.books;
+            userFavoriteBookIds = response.data.user_favorite_book_ids;
+            isAuthenticated = response.data.is_authenticated;
+            renderBooks();
+            console.log("[WebSocket] 資料已重新載入");
+          }
+        },
+        onError: (error) => {
+          console.error("[WebSocket] 重新載入失敗:", error);
+          showState("errorState");
+        },
+      });
+    }, 500);
+  }
+
+  /**
+   * 顯示更新通知
+   * @param {string} message - 通知訊息
+   * @param {string} action - 動作類型 (create/update/delete)
+   */
+  function showUpdateNotification(message, action) {
+    // 根據動作類型選擇顏色
+    const colors = {
+      create: "bg-green-500",
+      update: "bg-blue-500",
+      delete: "bg-red-500",
+    };
+    const bgColor = colors[action] || "bg-gray-500";
+
+    // 建立通知元素
+    const notification = document.createElement("div");
+    notification.className = `fixed top-4 right-4 ${bgColor} text-white px-6 py-3 rounded-lg shadow-lg z-50`;
+    notification.style.animation = "fadeIn 0.3s ease-in-out";
+    notification.innerHTML = `
+      <div class="flex items-center">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>${message}</span>
+      </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // 3 秒後淡出移除
+    setTimeout(() => {
+      notification.style.animation = "fadeOut 0.3s ease-in-out";
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  }
+
+
+  // ==========================================
   // 公開 API
   // ==========================================
 
@@ -570,6 +712,9 @@ const BookListApp = (function () {
 
       // 4. 載入書籍資料
       this.fetchBooks();
+
+      // 5. 初始化 WebSocket 連線
+      initWebSocket();
 
       isInitialized = true;
       console.log("[BookListApp] Initialized successfully");
