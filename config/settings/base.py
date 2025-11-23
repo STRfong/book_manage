@@ -188,3 +188,19 @@ SOCIALACCOUNT_PROVIDERS = {
 }
 
 SITE_ID = 1
+
+# ==========================================
+# Cache 設定 - 使用 Redis
+# ==========================================
+REDIS_URI = os.getenv('REDIS_URI', 'redis://127.0.0.1:6379/1')
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': REDIS_URI,
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+        },
+        'TIMEOUT': 300,  # 預設快取時間 5 分鐘（單位：秒）
+    }
+}
