@@ -9,6 +9,8 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib import messages
 from .models.book import Book
 from .models.reading_list import ReadingList
+from django.core.cache import cache
+import time
 # Create your views here.
 class HelloWorldView(View):
     def get(self, request):
@@ -43,24 +45,71 @@ class JsonResponseView(View):
 
 
 class BookListView(View):
-    """書籍列表頁"""
+    """書籍列表頁 - 只渲染頁面骨架，資料透過 AJAX 載入"""
 
     def get(self, request):
-        books = Book.objects.all()
-
-        # 取得使用者已收藏的書籍 ID
-        user_favorite_book_ids = []
-        if request.user.is_authenticated:
-            user_favorite_book_ids = ReadingList.objects.filter(
-                user=request.user
-            ).values_list('book_id', flat=True)
-
+        # 只傳遞出版社資料給表單使用（Modal 新增/編輯需要）
         context = {
-            'books': books,
-            'user_favorite_book_ids': list(user_favorite_book_ids),
             'publishers': Publisher.objects.all(),
         }
         return render(request, 'library/book_list.html', context)
+
+
+class BookListAPIView(View):
+    """書籍列表 API - 回傳 JSON 資料（有快取）"""
+
+    CACHE_KEY = 'api_book_list'
+    CACHE_TIMEOUT = 60  # 快取 60 秒
+
+    def get(self, request):
+        # ========== 快取機制 ==========
+        # 嘗試從快取取得書籍資料
+        cached_books = cache.get(self.CACHE_KEY)
+
+        if cached_books:
+            # 快取命中！
+            print(f"[Cache HIT] {self.CACHE_KEY}")
+            books_data = cached_books
+        else:
+            # 快取未命中，查詢資料庫
+            print(f"[Cache MISS] {self.CACHE_KEY}")
+            books = Book.objects.select_related('publisher').all()
+
+            # 組裝書籍資料
+            books_data = []
+            for book in books:
+                books_data.append({
+                    'id': book.id,
+                    'title': book.title,
+                    'price': book.price,
+                    'stock': book.stock,
+                    'publisher': {
+                        'id': book.publisher.id if book.publisher else None,
+                        'name': book.publisher.name if book.publisher else None,
+                    } if book.publisher else None,
+                })
+
+            # 存入快取
+            cache.set(self.CACHE_KEY, books_data, self.CACHE_TIMEOUT)
+            print(f"[Cache SET] {self.CACHE_KEY}")
+        # ========== 快取機制結束 ==========
+
+        # 取得使用者已收藏的書籍 ID（這部分不快取，因為每個使用者不同）
+        user_favorite_book_ids = []
+        if request.user.is_authenticated:
+            user_favorite_book_ids = list(
+                ReadingList.objects.filter(user=request.user).values_list('book_id', flat=True)
+            )
+
+        return JsonResponse({
+            'success': True,
+            'data': {
+                'books': books_data,
+                'user_favorite_book_ids': user_favorite_book_ids,
+                'is_authenticated': request.user.is_authenticated,
+            }
+        })
+
 
 
 class BookDetailView(View):
@@ -139,6 +188,7 @@ class BookCreateView(View):
             publisher=publisher,
         )
 
+        cache.delete('api_book_list')
         # 重定向到書籍列表頁
         return redirect('library:book_list')
 
@@ -208,6 +258,7 @@ class BookEditView(View):
         book.publisher = get_object_or_404(Publisher, id=publisher_id)
         book.save()
 
+        cache.delete('api_book_list')
         # 重定向到書籍詳細頁
         return redirect('library:book_detail', book_id=book.id)
 
@@ -230,6 +281,7 @@ class BookDeleteView(View):
         book = get_object_or_404(Book, id=book_id)
         book.delete()
 
+        cache.delete('api_book_list')
         # 重定向到列表頁
         return redirect('library:book_list')
 

@@ -26,7 +26,8 @@ urlpatterns = [
     path('reading-list/add/<int:book_id>/', views.AddToReadingListView.as_view(), name='add_to_reading_list'),
     path('reading-list/remove/<int:book_id>/', views.RemoveFromReadingListView.as_view(), name='remove_from_reading_list'),
 
-    # AJAX API 端點（在 urlpatterns 最後加入這兩行）
+    # AJAX API 端點
+    path('api/books/', views.BookListAPIView.as_view(), name='api_book_list'),
     path('api/reading-list/add/<int:book_id>/', views.AddToReadingListAPIView.as_view(), name='api_add_to_reading_list'),
     path('api/reading-list/remove/<int:book_id>/', views.RemoveFromReadingListAPIView.as_view(), name='api_remove_from_reading_list'),
 ]
