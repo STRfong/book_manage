@@ -188,6 +188,7 @@ class BookCreateView(View):
             publisher=publisher,
         )
 
+        cache.delete('api_book_list')
         # 重定向到書籍列表頁
         return redirect('library:book_list')
 
@@ -257,6 +258,7 @@ class BookEditView(View):
         book.publisher = get_object_or_404(Publisher, id=publisher_id)
         book.save()
 
+        cache.delete('api_book_list')
         # 重定向到書籍詳細頁
         return redirect('library:book_detail', book_id=book.id)
 
@@ -279,6 +281,7 @@ class BookDeleteView(View):
         book = get_object_or_404(Book, id=book_id)
         book.delete()
 
+        cache.delete('api_book_list')
         # 重定向到列表頁
         return redirect('library:book_list')
 
