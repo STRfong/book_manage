@@ -58,6 +58,9 @@ INSTALLED_APPS = [
 
     # channels 相關
     "channels",
+
+    # django-celery-beat 相關
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -256,16 +259,6 @@ CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
 # ==========================================
 from celery.schedules import crontab
 
-CELERY_BEAT_SCHEDULE = {
-    # 每日庫存檢查（每天早上 9 點執行）
-    'daily-stock-check': {
-        'task': 'apps.library.tasks.check_low_stock_books',
-        'schedule': crontab(hour=9, minute=0),
-    },
+# 使用 django-celery-beat 的資料庫排程器
+CELERY_BEAT_SCHEDULER = 'django_celery_beat.schedulers:DatabaseScheduler'
 
-    # # 測試用：每 30 秒執行一次（上課示範用，正式環境請移除）
-    # 'test-stock-check-every-30-seconds': {
-    #     'task': 'apps.library.tasks.check_low_stock_books',
-    #     'schedule': 10,  # 每 30 秒
-    # },
-}

@@ -201,6 +201,13 @@
         <!-- 側邊欄底部區域（貼在螢幕下緣）-->
         <div class="mt-auto pt-6 border-t border-white/20 space-y-4">
           {% if user.is_authenticated %}
+          <!-- 在登出按鈕前加入 -->
+          <a
+          href="{% url 'accounts:preference' %}"
+          class="block px-4 py-2 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600"
+          >
+          偏好設定
+          </a>
           <!-- 已登入：顯示登出按鈕 -->
           <div>
             <form method="post" action="{% url 'account_logout' %}">
