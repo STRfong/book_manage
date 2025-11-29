@@ -553,3 +553,20 @@ class RemoveFromReadingListAPIView(LoginRequiredMixin, View):
             'message': f'已將《{book.title}》從最愛移除！',
             'book_id': book_id
         })
+
+# ==================== 匯出功能 ====================
+
+class ExportBooksView(LoginRequiredMixin, View):
+    """匯出書籍報表 API"""
+
+    def post(self, request):
+        from apps.library.tasks import export_books_to_csv
+
+        # 發送任務到 Celery
+        task = export_books_to_csv.delay(user_id=request.user.id)
+
+        return JsonResponse({
+            'success': True,
+            'message': '報表產生中，完成後會通知您！',
+            'task_id': task.id,
+        })

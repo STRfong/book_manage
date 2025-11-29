@@ -225,3 +225,47 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+
+# ==========================================
+# Celery 設定 - 使用 Redis 作為 Broker
+# ==========================================
+# Broker：任務佇列存放的地方（使用 Redis）
+CELERY_BROKER_URL = REDIS_URI
+
+# Result Backend：任務結果存放的地方（可選，這裡也用 Redis）
+CELERY_RESULT_BACKEND = REDIS_URI
+
+# 時區設定（與 Django 一致）
+CELERY_TIMEZONE = TIME_ZONE
+
+# 接受的內容類型
+CELERY_ACCEPT_CONTENT = ['json']
+
+# 任務序列化格式
+CELERY_TASK_SERIALIZER = 'json'
+
+# 結果序列化格式
+CELERY_RESULT_SERIALIZER = 'json'
+
+# 啟動時重試連線（消除 Celery 6.0 棄用警告）
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# ==========================================
+# Celery Beat 定時任務設定
+# ==========================================
+from celery.schedules import crontab
+
+CELERY_BEAT_SCHEDULE = {
+    # 每日庫存檢查（每天早上 9 點執行）
+    'daily-stock-check': {
+        'task': 'apps.library.tasks.check_low_stock_books',
+        'schedule': crontab(hour=9, minute=0),
+    },
+
+    # 測試用：每 30 秒執行一次（上課示範用，正式環境請移除）
+    'test-stock-check-every-30-seconds': {
+        'task': 'apps.library.tasks.check_low_stock_books',
+        'schedule': 10,  # 每 30 秒
+    },
+}
