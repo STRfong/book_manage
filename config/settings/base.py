@@ -263,9 +263,9 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': crontab(hour=9, minute=0),
     },
 
-    # 測試用：每 30 秒執行一次（上課示範用，正式環境請移除）
-    'test-stock-check-every-30-seconds': {
-        'task': 'apps.library.tasks.check_low_stock_books',
-        'schedule': 10,  # 每 30 秒
-    },
+    # # 測試用：每 30 秒執行一次（上課示範用，正式環境請移除）
+    # 'test-stock-check-every-30-seconds': {
+    #     'task': 'apps.library.tasks.check_low_stock_books',
+    #     'schedule': 10,  # 每 30 秒
+    # },
 }
