@@ -56,4 +56,5 @@ ENV/
 .env
 .env.local
 
-# 靜態檔案
+# Celery Beat
+celerybeat-schedule.*

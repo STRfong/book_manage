@@ -30,4 +30,5 @@ urlpatterns = [
     path('api/books/', views.BookListAPIView.as_view(), name='api_book_list'),
     path('api/reading-list/add/<int:book_id>/', views.AddToReadingListAPIView.as_view(), name='api_add_to_reading_list'),
     path('api/reading-list/remove/<int:book_id>/', views.RemoveFromReadingListAPIView.as_view(), name='api_remove_from_reading_list'),
+    path('api/export/', views.ExportBooksView.as_view(), name='export_books'),  # 新增這行
 ]

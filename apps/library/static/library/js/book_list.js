@@ -40,6 +40,7 @@ const BookListApp = (function () {
     BOOK_LIST: "/library/api/books/",
     ADD_TO_READING_LIST: "/library/api/reading-list/add/",
     REMOVE_FROM_READING_LIST: "/library/api/reading-list/remove/",
+    EXPORT_BOOKS: "/library/api/export/",  // 新增這行
   };
 
   // ==========================================
@@ -559,6 +560,72 @@ const BookListApp = (function () {
   }
 
   // ==========================================
+  // 私有方法 - 匯出功能
+  // ==========================================
+
+  /**
+   * 設定匯出按鈕
+   */
+  function setupExportButton() {
+    const exportBtn = document.getElementById("exportBtn");
+
+    if (exportBtn) {
+      exportBtn.addEventListener("click", function () {
+        // 顯示確認訊息
+        if (!confirm("確定要匯出所有書籍報表嗎？")) {
+          return;
+        }
+
+        // 禁用按鈕，避免重複點擊
+        exportBtn.disabled = true;
+        exportBtn.innerHTML = `
+          <svg class="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+          </svg>
+          處理中...
+        `;
+
+        // 發送匯出請求
+        sendRequest({
+          url: API_ENDPOINTS.EXPORT_BOOKS,
+          method: "POST",
+          onSuccess: (response) => {
+            if (response.success) {
+              showUpdateNotification(response.message, "create");
+            }
+            // 恢復按鈕狀態
+            resetExportButton();
+          },
+          onError: (error) => {
+            console.error("匯出失敗:", error);
+            showUpdateNotification("匯出失敗，請稍後再試", "delete");
+            resetExportButton();
+          },
+        });
+      });
+    }
+  }
+
+  /**
+   * 重設匯出按鈕狀態
+   */
+  function resetExportButton() {
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn) {
+      exportBtn.disabled = false;
+      exportBtn.innerHTML = `
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+        匯出報表
+      `;
+    }
+  }
+
+
+  // ==========================================
   // 私有方法 - WebSocket
   // ==========================================
 
@@ -621,7 +688,14 @@ const BookListApp = (function () {
     // 1. 顯示通知
     showUpdateNotification(data.message, data.action);
 
-    // 2. 延遲後重新載入資料（讓使用者先看到通知）
+    // 2. 根據不同的 action 做不同處理
+    if (data.action === "export_complete" || data.action === "low_stock_warning") {
+      // 匯出完成或庫存警告，不需要重新載入資料
+      console.log(`[WebSocket] ${data.action} 通知`);
+      return;
+    }
+
+    // 3. 其他情況（create/update/delete）：重新載入資料
     setTimeout(() => {
       showState("loadingState");
 
@@ -645,6 +719,7 @@ const BookListApp = (function () {
     }, 500);
   }
 
+
   /**
    * 顯示更新通知
    * @param {string} message - 通知訊息
@@ -656,6 +731,8 @@ const BookListApp = (function () {
       create: "bg-green-500",
       update: "bg-blue-500",
       delete: "bg-red-500",
+      export_complete: "bg-purple-500",      // 匯出完成
+      low_stock_warning: "bg-orange-500",    // 庫存警告
     };
     const bgColor = colors[action] || "bg-gray-500";
 
@@ -715,6 +792,9 @@ const BookListApp = (function () {
 
       // 5. 初始化 WebSocket 連線
       initWebSocket();
+
+      // 6. 設定匯出按鈕
+      setupExportButton();
 
       isInitialized = true;
       console.log("[BookListApp] Initialized successfully");
